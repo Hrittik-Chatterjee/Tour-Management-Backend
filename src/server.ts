@@ -1,0 +1,60 @@
+import { Server } from "http";
+
+import mongoose from "mongoose";
+
+import app from "./app";
+import { envVars } from "./app/config/env";
+let server: Server;
+
+const startServer = async () => {
+  try {
+    // const mongoUri = process.env.MONGO_URI;
+
+    await mongoose.connect(envVars.MONGO_URI);
+    console.log("connected to tour management db");
+    server = app.listen(envVars.PORT, () => {
+      console.log(`Server is listeing to port ${envVars.PORT}`);
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+startServer();
+
+process.on("unhandledRejection", (err) => {
+  console.log("unhandled Rejection error, Server shutting down", err);
+  if (server) {
+    server.close(() => {});
+    process.exit(1);
+  }
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  console.log("uncaught Rejection error, Server shutting down", err);
+  if (server) {
+    server.close(() => {});
+    process.exit(1);
+  }
+  process.exit(1);
+});
+
+process.on("SIGTERM", () => {
+  console.log("SIGTERM signal  error, Server shutting down");
+  if (server) {
+    server.close(() => {});
+    process.exit(1);
+  }
+  process.exit(1);
+});
+process.on("SIGINT", () => {
+  console.log("SIGINT signal  error, Server shutting down");
+  if (server) {
+    server.close(() => {});
+    process.exit(1);
+  }
+  process.exit(1);
+});
+// Promise.reject(new Error("forgot to catch this"));
+
+// throw new Error("local");
