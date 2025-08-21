@@ -5,13 +5,12 @@ import mongoose from "mongoose";
 import app from "./app";
 import { envVars } from "./app/config/env";
 import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
+import { connectRedis } from "./app/config/redis.config";
 let server: Server;
 
 const startServer = async () => {
   try {
-    // const mongoUri = process.env.MONGO_URI;
-
-    await mongoose.connect(envVars.MONGO_URI);
+    await mongoose.connect(envVars.DB_URL);
     console.log("connected to tour management db");
     server = app.listen(envVars.PORT, () => {
       console.log(`Server is listeing to port ${envVars.PORT}`);
@@ -22,6 +21,7 @@ const startServer = async () => {
 };
 
 (async () => {
+  await connectRedis();
   await startServer();
   await seedSuperAdmin();
 })();
