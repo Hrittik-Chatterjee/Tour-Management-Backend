@@ -9,7 +9,7 @@ import { Tour } from "../tour/tour.model";
 import { User } from "../user/user.model";
 import { BOOKING_STATUS, IBooking } from "./booking.interface";
 import { Booking } from "./booking.model";
-import { getTransactionId } from "../../utils/getTransactionid";
+import { getTransactionId } from "../../utils/getTransactionId";
 
 /**
  * Duplicate DB Collections / replica
