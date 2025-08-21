@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import AppError from "../errorHelpers/AppError";
-import { verifyToken } from "../utils/jwt";
+import httpStatus from "http-status-codes";
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../config/env";
-import { User } from "../modules/user/user.model";
-import httpStatus from "http-status-codes";
+import AppError from "../errorHelpers/AppError";
 import { IsActive } from "../modules/user/user.interface";
+import { User } from "../modules/user/user.model";
+import { verifyToken } from "../utils/jwt";
 
 export const checkAuth =
   (...authRoles: string[]) =>
@@ -14,7 +14,7 @@ export const checkAuth =
       const accessToken = req.headers.authorization;
 
       if (!accessToken) {
-        throw new AppError(401, "No token recieved");
+        throw new AppError(403, "No Token Recieved");
       }
 
       const verifiedToken = verifyToken(
@@ -22,35 +22,34 @@ export const checkAuth =
         envVars.JWT_ACCESS_SECRET
       ) as JwtPayload;
 
-      const isUserExists = await User.findOne({
-        email: verifiedToken.email,
-      });
+      const isUserExist = await User.findOne({ email: verifiedToken.email });
 
-      if (!isUserExists) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User Doesn't Exists");
+      if (!isUserExist) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
+      }
+      if (!isUserExist.isVerified) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
       }
       if (
-        isUserExists.isActive === IsActive.BLOCKED ||
-        isUserExists.isActive === IsActive.INACTIVE
+        isUserExist.isActive === IsActive.BLOCKED ||
+        isUserExist.isActive === IsActive.INACTIVE
       ) {
         throw new AppError(
           httpStatus.BAD_REQUEST,
-          `User is ${isUserExists.isActive}`
+          `User is ${isUserExist.isActive}`
         );
       }
-      if (isUserExists.isDeleted) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User is Deleted");
-      }
-      // if (!verifiedToken) {
-      //   throw new AppError(403, "You are not authorized");
-      // }
-      if (!authRoles.includes(verifiedToken.role)) {
-        throw new AppError(403, "You are not permitted to view this route");
+      if (isUserExist.isDeleted) {
+        throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
       }
 
+      if (!authRoles.includes(verifiedToken.role)) {
+        throw new AppError(403, "You are not permitted to view this route!!!");
+      }
       req.user = verifiedToken;
       next();
     } catch (error) {
+      console.log("jwt error", error);
       next(error);
     }
   };
